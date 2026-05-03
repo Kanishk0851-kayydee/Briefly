@@ -1,9 +1,4 @@
-import './globals.css'
-
-export const metadata = {
-  title: 'Briefly | Precision in Culinary Partnerships',
-  description: 'AI-powered branding for chefs and food founders',
-}
+import './globals.css' // This MUST be at the very top
 
 export default function RootLayout({ children }) {
   return (
