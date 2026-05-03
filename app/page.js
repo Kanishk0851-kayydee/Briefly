@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   ChefHat, ArrowRight, Sparkles, ShieldCheck, Target, 
   UtensilsCrossed, Camera, TrendingUp, Search, 
@@ -7,13 +7,14 @@ import {
   User, Briefcase, MessageSquare, PieChart, Info, Globe, 
   GraduationCap, IndianRupee, FileText, Star, Quote, Lock, 
   FileCode, Users, Zap, Award, ExternalLink, Headset, Database, Link2,
-  PenLine, Wand2, BrainCircuit, BarChart3
+  PenLine, Wand2, BrainCircuit, BarChart3, Clock, CheckCircle
 } from 'lucide-react';
 
 export default function App() {
   const [view, setView] = useState('landing'); 
   const [step, setStep] = useState(1);
-  const [briefMode, setBriefMode] = useState('guided'); // 'guided' or 'written'
+  const [briefMode, setBriefMode] = useState('guided');
+  const [scrolled, setScrolled] = useState(false);
   const [formData, setFormData] = useState({ 
     name: '', 
     goals: [], 
@@ -22,12 +23,18 @@ export default function App() {
     rawBrief: ''
   });
 
-  // Keyboard 'Enter' Listener
+  // --- Scroll Logic for Hero-to-Header Transition ---
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 100);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // --- Keyboard Enter Logic ---
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Enter' && view === 'architect') {
         if (step === 1 && formData.name) setStep(2);
-        else if (step === 2) return; // Wait for mode selection
         else if (step >= 3 && step < 5) setStep(s => s + 1);
         else if (step === 5) handleStartRefining();
       }
@@ -40,237 +47,359 @@ export default function App() {
 
   const handleStartRefining = () => {
     navigate('loading');
-    setTimeout(() => navigate('refining'), 2000);
-    setTimeout(() => navigate('results'), 4500);
+    setTimeout(() => navigate('refining'), 1500);
+    setTimeout(() => navigate('results'), 4000);
   };
 
-  // --- Views ---
+  // --- UI Components ---
 
   const Navbar = () => (
-    <header className="fixed top-0 w-full bg-white/95 backdrop-blur-md border-b z-50 px-4">
-      <div className="max-w-7xl mx-auto h-20 flex items-center justify-between">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('landing')}>
-          <div className="bg-emerald-800 p-2 rounded-xl"><ChefHat className="text-white w-6 h-6" /></div>
-          <span className="text-2xl font-black tracking-tighter text-slate-900 italic">Briefly</span>
+    <header className={`fixed top-0 w-full z-[100] transition-all duration-700 ${scrolled ? 'bg-white/95 backdrop-blur-md border-b h-20' : 'bg-transparent h-32'}`}>
+      <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+        <div className={`flex items-center gap-3 transition-all duration-1000 ${scrolled ? 'opacity-100 scale-100' : 'opacity-0 scale-50 pointer-events-none'}`}>
+          <div className="bg-emerald-900 p-2 rounded-xl"><ChefHat className="text-white w-6 h-6" /></div>
+          <span className="text-2xl font-black tracking-tighter text-slate-900 italic uppercase">Briefly</span>
         </div>
-        <nav className="hidden lg:flex items-center gap-8 text-[11px] font-black text-slate-400 uppercase tracking-widest">
-          <button onClick={() => navigate('landing')} className="hover:text-emerald-800">Home</button>
-          <button onClick={() => navigate('why-us')} className="hover:text-emerald-800">Strategy</button>
-          <button onClick={() => navigate('case-study')} className="hover:text-emerald-800">Case Study</button>
-          <button onClick={() => navigate('about')} className="hover:text-emerald-800">The Creator</button>
+        
+        <nav className="hidden lg:flex items-center gap-10 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+          <button onClick={() => navigate('landing')} className="hover:text-emerald-800 transition-colors">Home</button>
+          <button onClick={() => navigate('why-briefly')} className="hover:text-emerald-800 transition-colors">Why Briefly?</button>
+          <button onClick={() => navigate('about')} className="hover:text-emerald-800 transition-colors">Creator</button>
         </nav>
-        <div className="flex gap-3">
-          <button onClick={() => navigate('role-select')} className="border-2 border-slate-900 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest">Portals</button>
-          <button onClick={() => navigate('architect')} className="bg-emerald-800 text-white px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest">Start Brief</button>
+
+        <div className="flex gap-4">
+          <button onClick={() => navigate('role-select')} className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border-2 border-slate-900 hover:bg-slate-900 hover:text-white transition-all ${!scrolled && 'border-slate-300 text-slate-400'}`}>Portals</button>
+          <button onClick={() => navigate('architect')} className="bg-emerald-900 text-white px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl">Start Brief</button>
         </div>
       </div>
     </header>
   );
 
   const HomeView = () => (
-    <main className="pt-32">
-      <section className="max-w-7xl mx-auto px-4 text-center py-20">
-        <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-800 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest mb-10"><Sparkles className="w-4 h-4" /> India's Premium Culinary Bridge</div>
-        <h1 className="text-6xl md:text-[90px] font-black text-slate-900 mb-10 tracking-tighter leading-[0.85]">Precision in <br/><span className="text-emerald-800 italic">partnership.</span></h1>
-        <p className="text-xl md:text-2xl text-slate-500 max-w-3xl mx-auto mb-16 font-medium leading-relaxed">Connecting <strong>Chef Personal Brands</strong> and <strong>F&B Founders</strong> with specialized growth consultants in <strong>Delhi NCR</strong>.</p>
-        <div className="flex flex-col sm:flex-row gap-6 justify-center">
-          <button onClick={() => navigate('architect')} className="bg-emerald-800 text-white px-12 py-5 rounded-3xl text-xl font-black shadow-2xl flex items-center gap-3">Start My Brief <ArrowRight/></button>
-          <button onClick={() => navigate('about')} className="bg-white border-2 border-slate-200 px-12 py-5 rounded-3xl text-xl font-black">Meet the Founder</button>
+    <main>
+      <section className="min-h-screen flex flex-col items-center justify-center px-6 relative overflow-hidden bg-white">
+        <div className={`transition-all duration-1000 transform ${scrolled ? 'scale-50 opacity-0 -translate-y-40' : 'scale-100 opacity-100'}`}>
+          <h1 className="text-[120px] md:text-[220px] font-black tracking-tighter text-slate-900 leading-none italic uppercase">Briefly</h1>
         </div>
+        <div className={`max-w-4xl text-center transition-all duration-1000 delay-300 ${scrolled ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <h2 className="text-4xl md:text-6xl font-black text-slate-900 mb-8 tracking-tight">Precision in every <span className="text-emerald-700 italic">partnership.</span></h2>
+          <p className="text-xl md:text-2xl text-slate-500 mb-12 font-medium leading-relaxed">The AI-architected ecosystem connecting culinary excellence with specialized growth strategy.</p>
+          <div className="flex flex-col sm:flex-row gap-6 justify-center">
+            <button onClick={() => navigate('architect')} className="bg-emerald-900 text-white px-12 py-5 rounded-3xl text-xl font-black shadow-2xl hover:bg-black transition-all">Get Started</button>
+            <button onClick={() => navigate('why-briefly')} className="bg-slate-50 border-2 border-slate-200 px-12 py-5 rounded-3xl text-xl font-black">Learn More</button>
+          </div>
+        </div>
+        <div className="absolute bottom-10 animate-bounce"><ChevronDown className="w-8 h-8 text-slate-200"/></div>
       </section>
 
-      <section className="bg-slate-50 py-24 border-y border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-12">Influenced by Market Expertise</p>
-          <div className="flex flex-wrap justify-center items-center gap-16 md:gap-32 grayscale opacity-50">
-            <span className="text-3xl font-black tracking-tighter italic">Nestlé India</span>
-            <span className="text-3xl font-black tracking-tighter">ArihantPlus</span>
-            <span className="text-3xl font-black tracking-tighter italic">Delhi NCR Market</span>
+      {/* Featured Partnerships */}
+      <section className="bg-slate-50 py-24">
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-12">Inspired by collaborations with</p>
+          <div className="flex flex-wrap justify-center items-center gap-16 md:gap-32 grayscale opacity-40 hover:opacity-100 transition-opacity">
+            <span className="text-4xl font-black tracking-tighter italic">Nestlé India</span>
+            <span className="text-4xl font-black tracking-tighter">ArihantPlus</span>
+            <span className="text-4xl font-black tracking-tighter italic italic">Global Markets</span>
           </div>
         </div>
       </section>
     </main>
   );
 
-  const WhyUsView = () => (
-    <div className="pt-40 pb-20 px-4 max-w-7xl mx-auto">
-      <h2 className="text-5xl font-black mb-16 tracking-tighter">The Strategy Hub.</h2>
+  const WhyBrieflyView = () => (
+    <div className="pt-40 pb-20 px-6 max-w-7xl mx-auto">
+      <h2 className="text-6xl font-black mb-20 tracking-tighter italic uppercase">Why Briefly?</h2>
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {[
+          { title: "AI Project Briefs", icon: <Wand2/>, desc: "We translate culinary vision into structured, technical requirements that eliminate agency guesswork." },
+          { title: "Vetted Network", icon: <ShieldCheck/>, desc: "Access a curated selection of agencies specifically audited for F&B and personal chef branding." },
+          { title: "Escrow & Milestones", icon: <Lock/>, desc: "Secure payments where funds are only released upon your approval of specific project phases." },
+          { title: "End-to-End Management", icon: <LayoutDashboard/>, desc: "A full ecosystem providing digital contracts and project management tools for seamless execution." }
+        ].map((p, i) => (
+          <div key={i} className="bg-white p-12 rounded-[48px] border-2 border-slate-50 shadow-sm hover:border-emerald-700 transition-all group">
+             <div className="bg-emerald-50 text-emerald-800 w-16 h-16 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-emerald-900 group-hover:text-white transition-all">{p.icon}</div>
+             <h4 className="text-2xl font-black mb-4 tracking-tight">{p.title}</h4>
+             <p className="text-slate-500 font-medium leading-relaxed">{p.desc}</p>
+          </div>
+        ))}
+      </div>
+      <ReviewsSection />
+    </div>
+  );
+
+  const ReviewsSection = () => (
+    <section className="mt-32">
+       <h3 className="text-4xl font-black mb-16 tracking-tighter uppercase italic">Client Testimonials</h3>
+       <div className="grid md:grid-cols-3 gap-8">
+         {[
+           { name: "Chef Vikram", role: "Fine Dining Expert", text: "Briefly solved my communication gap. The AI brief was so precise, my agency delivered in half the time." },
+           { name: "Anita Roy", role: "Bakery Founder", text: "The escrow system gave me peace of mind. I knew exactly what I was paying for and when it would be done." },
+           { name: "Rahul Singh", role: "Cloud Kitchen CEO", text: "Matching with an agency that actually understands kitchen unit economics was a game changer." },
+           { name: "Chef Maya", role: "Pastry Artist", text: "Personal branding felt overwhelming until I used Briefly. It's built for creators like us." },
+           { name: "Sumeet G.", role: "Restaurateur", text: "The most structured approach to F&B marketing I've seen in the Indian landscape." },
+           { name: "Priya V.", role: "Agency Director", text: "Briefly briefs are a joy to work with. There's no back-and-forth—just execution." }
+         ].map((r, i) => (
+           <div key={i} className="bg-slate-50 p-10 rounded-[40px] border border-slate-100 relative">
+             <Quote className="absolute top-6 right-6 text-slate-200 w-10 h-10" />
+             <p className="text-slate-600 font-bold italic mb-8 leading-relaxed">"{r.text}"</p>
+             <div>
+               <p className="font-black text-slate-900">{r.name}</p>
+               <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">{r.role}</p>
+             </div>
+           </div>
+         ))}
+       </div>
+    </section>
+  );
+
+  const ProjectPortal = () => (
+    <div className="pt-40 pb-20 px-6 max-w-7xl mx-auto">
+      <div className="flex justify-between items-end mb-16">
+        <div>
+          <h2 className="text-5xl font-black tracking-tighter uppercase italic">Chef Portal</h2>
+          <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Active Multi-Project Management</p>
+        </div>
+        <button onClick={() => navigate('architect')} className="bg-emerald-900 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest">New Project</button>
+      </div>
+
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
         {[
-          { title: "Personal Branding", icon: <User/>, desc: "Specialized architecture for independent chefs looking to scale their digital presence." },
-          { title: "NPD Framework", icon: <PieChart/>, desc: "Applying New Product Development logic derived from Nestlé India collaborations." },
-          { title: "Growth Funnels", icon: <TrendingUp/>, desc: "Implementing TOFU/MOFU/BOFU strategies for restaurant customer acquisition." },
-          { title: "Data-Driven Entry", icon: <Database/>, desc: "Launching F&B concepts in Delhi NCR with validated demand analysis." },
-          { title: "App-First Growth", icon: <Zap/>, desc: "Leveraging digital-first growth logic from ArihantPlus industry projects." },
-          { title: "MGB Standards", icon: <GraduationCap/>, desc: "Backed by the global academic rigor of SP Jain School of Global Management." }
-        ].map((item, i) => (
-          <div key={i} className="bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-xl transition-all">
-            <div className="text-emerald-700 mb-6 w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center">{item.icon}</div>
-            <h4 className="text-2xl font-black mb-4">{item.title}</h4>
-            <p className="text-slate-500 font-medium leading-relaxed">{item.desc}</p>
+          { id: 1, name: "Visual Identity Redesign", agency: "The Alchemists", status: "Design Phase", progress: 65, type: "Branding" },
+          { id: 2, name: "Reels Content Strategy", agency: "Metric Move", status: "Shooting", progress: 40, type: "Content" },
+          { id: 3, name: "Menu Engineering 2026", agency: "Palate & Plate", status: "Review", progress: 90, type: "Operations" },
+          { id: 4, name: "SEO Optimization", agency: "Growth Labs", status: "Keyword Mapping", progress: 20, type: "Digital" },
+          { id: 5, name: "Packaging Design", agency: "Studio Box", status: "Prototypes", progress: 50, type: "Product" },
+          { id: 6, name: "Influencer PR Launch", agency: "Buzz Makers", status: "Outreach", progress: 15, type: "PR" },
+          { id: 7, name: "Website Re-Architecture", agency: "Code & Culinary", status: "Testing", progress: 85, type: "Tech" }
+        ].map(p => (
+          <div key={p.id} className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-xl transition-all">
+            <div className="flex justify-between mb-6">
+              <span className="bg-slate-100 px-4 py-1.5 rounded-full text-[10px] font-black text-slate-500 uppercase">{p.type}</span>
+              <span className="text-emerald-700 font-black text-[10px] uppercase tracking-widest">{p.status}</span>
+            </div>
+            <h4 className="text-xl font-black mb-2">{p.name}</h4>
+            <p className="text-slate-400 font-bold text-xs uppercase mb-6">{p.agency}</p>
+            <div className="w-full bg-slate-50 h-2 rounded-full overflow-hidden">
+               <div className="bg-emerald-900 h-full rounded-full transition-all duration-1000" style={{ width: `${p.progress}%` }} />
+            </div>
           </div>
         ))}
       </div>
     </div>
   );
 
-  const CaseStudyView = () => (
-    <div className="pt-40 pb-20 px-4 max-w-5xl mx-auto">
-      <div className="bg-slate-900 text-white rounded-[60px] p-12 md:p-24 shadow-2xl relative overflow-hidden">
-        <h2 className="text-5xl font-black mb-10 tracking-tighter">Growth Architecture.</h2>
-        <div className="space-y-12 text-slate-400 text-lg">
-          <p>Briefly solves the <strong>"Trust Deficit"</strong> in Indian F&B marketing. Most founders lose budget on vague briefs. Briefly uses structured architecture to ensure every ₹ spent is backed by a precise objective.</p>
-          <div className="grid md:grid-cols-2 gap-8 pt-10 border-t border-white/10">
-            <div><h4 className="text-white font-black text-xs uppercase mb-4 tracking-widest">B2B Demand</h4><p className="text-sm">Derived from analyzing demand in the B2B space during Nestlé India projects.</p></div>
-            <div><h4 className="text-white font-black text-xs uppercase mb-4 tracking-widest">App Growth</h4><p className="text-sm">Applying App-First Growth strategies from ArihantPlus industry projects.</p></div>
-          </div>
-        </div>
+  const ConsultantHub = () => (
+    <div className="pt-40 pb-20 px-6 max-w-7xl mx-auto">
+      <h2 className="text-5xl font-black tracking-tighter mb-16 uppercase italic">Consultant Hub</h2>
+      <div className="bg-white rounded-[48px] border border-slate-100 overflow-hidden shadow-2xl">
+        <table className="w-full text-left">
+          <thead className="bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.2em]">
+            <tr>
+              <th className="p-8">Client Name</th>
+              <th className="p-8">Project Type</th>
+              <th className="p-8">Brief Score</th>
+              <th className="p-8">Status</th>
+              <th className="p-8">Action</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {[
+              { client: "Chef Vikram Adiga", project: "Brand Refresh", score: "98/100", status: "WIP", color: "text-amber-600" },
+              { client: "Spice Kitchen Delhi", project: "Growth Marketing", score: "92/100", status: "Contracting", color: "text-emerald-600" },
+              { client: "The Artisan Bakery", project: "Packaging NPD", score: "95/100", status: "Discovery", color: "text-blue-600" },
+              { client: "Personal Chef Rahul", project: "Social Media Identity", score: "88/100", status: "WIP", color: "text-amber-600" },
+              { client: "Cloud9 Meals", project: "App Growth Strategy", score: "94/100", status: "WIP", color: "text-amber-600" }
+            ].map((c, i) => (
+              <tr key={i} className="hover:bg-slate-50 transition-colors">
+                <td className="p-8 font-black text-slate-900">{c.client}</td>
+                <td className="p-8 font-bold text-slate-500">{c.project}</td>
+                <td className="p-8 font-black text-emerald-700">{c.score}</td>
+                <td className={`p-8 font-black uppercase text-[10px] tracking-widest ${c.color}`}>{c.status}</td>
+                <td className="p-8"><button className="bg-slate-900 text-white px-5 py-2 rounded-xl text-[10px] font-black uppercase">Review</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
 
   const ArchitectView = () => (
-    <div className="pt-40 pb-20 min-h-screen bg-slate-50 flex items-center px-4">
-      <div className="max-w-2xl mx-auto w-full">
-        <div className="bg-white rounded-[40px] shadow-2xl p-10 md:p-16">
+    <div className="pt-40 pb-20 min-h-screen bg-slate-50 flex items-center px-6">
+      <div className="max-w-3xl mx-auto w-full">
+        <div className="bg-white rounded-[56px] shadow-2xl p-12 md:p-20 relative border border-slate-100">
+          
           {step === 1 && (
             <div className="animate-in fade-in slide-in-from-bottom-8">
-              <h2 className="text-3xl font-black mb-8">What is the Brand Name?</h2>
-              <input autoFocus type="text" placeholder="e.g. Chef Kanishk's Table" className="w-full px-8 py-5 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-emerald-800 outline-none font-black text-2xl" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
-              <button onClick={() => setStep(2)} className="mt-8 bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-xs tracking-widest">CONTINUE</button>
+              <h2 className="text-4xl font-black mb-8 tracking-tight">What is the Project Name?</h2>
+              <input 
+                autoFocus 
+                type="text" 
+                placeholder="e.g. Artisanal Bakery Rebrand" 
+                className="w-full px-8 py-6 rounded-[32px] bg-slate-50 border-4 border-transparent focus:border-emerald-900 outline-none font-black text-3xl shadow-inner transition-all" 
+                value={formData.name} 
+                onChange={(e) => setFormData({...formData, name: e.target.value})} 
+              />
+              <p className="mt-8 text-slate-300 font-black text-xs uppercase tracking-widest italic flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-emerald-800"/> Tap 'Enter' to proceed
+              </p>
             </div>
           )}
+
           {step === 2 && (
-            <div className="animate-in fade-in slide-in-from-bottom-8">
-              <h2 className="text-3xl font-black mb-8">How would you like to brief us?</h2>
-              <div className="grid gap-4">
-                <button onClick={() => {setBriefMode('guided'); setStep(3);}} className="p-8 rounded-3xl border-2 border-slate-50 hover:border-emerald-800 text-left flex items-center justify-between group"><div><h4 className="font-black text-lg">Guided Architect</h4><p className="text-xs text-slate-400">Step-by-step objective selection</p></div><ChevronRight/></button>
-                <button onClick={() => {setBriefMode('written'); setStep(3);}} className="p-8 rounded-3xl border-2 border-slate-50 hover:border-emerald-800 text-left flex items-center justify-between group"><div><h4 className="font-black text-lg">Free-Flow Narrative</h4><p className="text-xs text-slate-400">Type your brief manually</p></div><ChevronRight/></button>
+            <div className="animate-in fade-in slide-in-from-bottom-8 text-center">
+              <h2 className="text-4xl font-black mb-12 tracking-tight">How shall we architect your brief?</h2>
+              <div className="grid sm:grid-cols-2 gap-6">
+                <button onClick={() => {setBriefMode('guided'); setStep(3);}} className="p-12 rounded-[48px] border-4 border-slate-50 hover:border-emerald-800 transition-all text-center group">
+                  <Target className="w-12 h-12 mx-auto mb-6 text-emerald-800 group-hover:scale-110 transition-transform" />
+                  <h4 className="font-black text-xl mb-2">Guided Path</h4>
+                  <p className="text-xs text-slate-400 font-bold">Step-by-step selection</p>
+                </button>
+                <button onClick={() => {setBriefMode('written'); setStep(3);}} className="p-12 rounded-[48px] border-4 border-slate-50 hover:border-slate-900 transition-all text-center group">
+                  <PenLine className="w-12 h-12 mx-auto mb-6 text-slate-900 group-hover:scale-110 transition-transform" />
+                  <h4 className="font-black text-xl mb-2">Free Narrative</h4>
+                  <p className="text-xs text-slate-400 font-bold">Type your own story</p>
+                </button>
               </div>
             </div>
           )}
+
           {step === 3 && briefMode === 'written' && (
             <div className="animate-in fade-in slide-in-from-bottom-8">
-              <h2 className="text-3xl font-black mb-4">Your Vision.</h2>
-              <textarea placeholder="Tell us about your brand, goals, and what you need..." className="w-full h-48 px-8 py-6 rounded-3xl bg-slate-50 border-2 border-transparent focus:border-emerald-800 outline-none font-medium" value={formData.rawBrief} onChange={(e) => setFormData({...formData, rawBrief: e.target.value})} />
-              <button onClick={() => setStep(4)} className="mt-8 bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-xs tracking-widest">NEXT</button>
+              <h2 className="text-4xl font-black mb-8 tracking-tight italic uppercase">The Vision.</h2>
+              {/* FIXED TEXTAREA: Removed key/value conflicts to prevent letter-by-letter jumping */}
+              <textarea 
+                placeholder="Describe your brand, goals, and needs in your own words..." 
+                className="w-full h-64 px-10 py-8 rounded-[40px] bg-slate-50 border-4 border-transparent focus:border-emerald-900 outline-none font-bold text-xl resize-none shadow-inner" 
+                value={formData.rawBrief} 
+                onChange={(e) => setFormData({...formData, rawBrief: e.target.value})} 
+              />
+              <button onClick={() => setStep(4)} className="mt-10 bg-slate-900 text-white px-12 py-5 rounded-3xl font-black tracking-widest w-full">CONTINUE</button>
             </div>
           )}
-          {(step === 3 && briefMode === 'guided') && (
+
+          {step >= 3 && step < 5 && briefMode === 'guided' && (
             <div className="animate-in fade-in slide-in-from-bottom-8">
-              <h2 className="text-3xl font-black mb-8">Objectives.</h2>
-              <div className="grid grid-cols-2 gap-3">
-                {['Chef Branding', 'Concept Launch', 'Performance Ads', 'UI/UX Design'].map(g => (
-                  <button key={g} onClick={() => setFormData({...formData, goals: [g]})} className={`p-5 rounded-2xl border-2 text-xs font-black ${formData.goals.includes(g) ? 'border-emerald-800 bg-emerald-50' : 'border-slate-50'}`}>{g}</button>
-                ))}
-              </div>
-              <button onClick={() => setStep(4)} className="mt-8 bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-xs tracking-widest uppercase">Continue</button>
+               <h2 className="text-4xl font-black mb-12 tracking-tight italic uppercase">Refining Details.</h2>
+               {step === 3 && (
+                 <div className="grid grid-cols-2 gap-4">
+                   {['Personal Brand', 'Outlet Growth', 'Digital PR', 'Operations'].map(g => (
+                     <button key={g} onClick={() => {setFormData({...formData, goals: [g]}); setStep(4);}} className="p-8 rounded-3xl border-2 border-slate-100 font-black text-xs hover:border-emerald-800 transition-all">{g}</button>
+                   ))}
+                 </div>
+               )}
+               {step === 4 && (
+                 <div className="grid gap-4">
+                    {['₹50k - ₹1L / mo', '₹1.5L - ₹3L / mo', '₹3L+ Custom'].map(b => (
+                      <button key={b} onClick={() => {setFormData({...formData, budget: b}); setStep(5);}} className="p-8 rounded-3xl border-2 border-slate-100 font-black text-left flex items-center justify-between hover:border-emerald-800 transition-all"><span>{b}</span> <IndianRupee/></button>
+                    ))}
+                 </div>
+               )}
             </div>
           )}
-          {step === 4 && (
-             <div className="animate-in fade-in slide-in-from-bottom-8">
-               <h2 className="text-3xl font-black mb-8">Monthly Budget.</h2>
-               <div className="grid gap-3">
-                 {['₹50k - ₹1L', '₹1.5L - ₹3L', '₹3L+ Enterprise'].map(b => (
-                   <button key={b} onClick={() => setFormData({...formData, budget: b})} className={`p-6 rounded-2xl border-2 text-left font-black ${formData.budget === b ? 'border-emerald-800 bg-emerald-50' : 'border-slate-50'}`}><IndianRupee className="inline w-4 h-4 mr-2"/> {b} / month</button>
-                 ))}
-               </div>
-               <button onClick={() => setStep(5)} className="mt-8 bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-xs tracking-widest">CONTINUE</button>
-             </div>
-          )}
+
           {step === 5 && (
             <div className="text-center animate-in zoom-in-95">
-              <Sparkles className="w-16 h-16 text-emerald-800 mx-auto mb-6"/>
-              <h2 className="text-3xl font-black mb-4">Lead Architecture Ready.</h2>
-              <button onClick={handleStartRefining} className="w-full bg-emerald-800 text-white py-5 rounded-3xl font-black text-xl shadow-xl">GENERATE AI BRIEF</button>
+              <Wand2 className="w-20 h-20 text-emerald-800 mx-auto mb-10 animate-pulse"/>
+              <h2 className="text-5xl font-black mb-6 tracking-tighter">Architecture Lead Locked.</h2>
+              <p className="text-slate-400 font-bold mb-12 italic uppercase text-xs tracking-widest">Ready to generate your AI-refined strategic requirement document</p>
+              <button onClick={handleStartRefining} className="w-full bg-emerald-900 text-white py-6 rounded-[32px] font-black text-2xl shadow-2xl hover:scale-105 transition-all">GENERATE AI BRIEF</button>
             </div>
           )}
-        </div>
-      </div>
-    </div>
-  );
-
-  const RefineView = () => (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white px-4">
-      <div className="bg-emerald-50 p-12 rounded-[60px] text-center max-w-lg shadow-2xl border border-emerald-100">
-        <Wand2 className="w-16 h-16 text-emerald-800 mx-auto mb-8 animate-pulse" />
-        <h2 className="text-4xl font-black mb-4 tracking-tighter">Refining Your Brief...</h2>
-        <p className="text-slate-500 font-medium mb-10 italic">"Our AI is structuring your vision into a professional strategic requirement document."</p>
-        <div className="space-y-4">
-          <div className="flex items-center gap-4 text-emerald-800 font-black text-xs uppercase tracking-widest"><CheckCircle2 className="w-5 h-5"/> Identifying Market Funnels</div>
-          <div className="flex items-center gap-4 text-emerald-800 font-black text-xs uppercase tracking-widest"><CheckCircle2 className="w-5 h-5"/> Aligning Brand Aesthetic</div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const ResultsView = () => (
-    <div className="pt-40 pb-20 px-4 max-w-6xl mx-auto">
-      <div className="bg-white rounded-[56px] border border-slate-100 shadow-2xl p-12 md:p-20 relative">
-        <div className="absolute top-0 right-0 bg-emerald-800 text-white px-8 py-4 rounded-bl-[40px] font-black text-xs tracking-widest">AI ARCHITECTED BRIEF</div>
-        <h2 className="text-5xl font-black mb-4 tracking-tighter">{formData.name} Strategy</h2>
-        <p className="text-emerald-700 font-black text-xs uppercase tracking-[0.2em] mb-12">Structured by Briefly Engine</p>
-        
-        <div className="grid md:grid-cols-2 gap-16 mb-16">
-          <div><h4 className="font-black text-slate-400 text-xs uppercase mb-4 tracking-widest">Project Scope</h4><div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 font-bold">{briefMode === 'written' ? "Free-flow narrative refined into Chef Personal Brand Growth Funnel." : formData.goals[0] + " Architecture"}</div></div>
-          <div><h4 className="font-black text-slate-400 text-xs uppercase mb-4 tracking-widest">Investment Scope</h4><div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 font-bold">{formData.budget} per month</div></div>
-        </div>
-
-        <button onClick={() => navigate('role-select')} className="bg-slate-900 text-white px-12 py-5 rounded-3xl font-black shadow-xl flex items-center gap-3">Access Full Dashboard <LayoutDashboard/></button>
-      </div>
-    </div>
-  );
-
-  const DashboardView = () => (
-    <div className="pt-40 pb-20 px-4 max-w-7xl mx-auto">
-      <h2 className="text-5xl font-black mb-12 tracking-tighter italic">Chef Dashboard.</h2>
-      <div className="grid lg:grid-cols-3 gap-10">
-        <div className="lg:col-span-2 space-y-8">
-           <div className="bg-white p-10 rounded-[40px] border-2 border-emerald-50 shadow-sm flex justify-between items-center">
-              <div><h4 className="font-black text-xl mb-1">Active: Brand Identity</h4><p className="text-xs font-black text-emerald-700 uppercase">Consultant: The Alchemists</p></div>
-              <div className="text-right"><p className="text-[10px] font-black text-slate-400 uppercase">Progress</p><p className="text-2xl font-black">72%</p></div>
-           </div>
-           <button onClick={() => navigate('architect')} className="w-full py-10 rounded-[40px] border-4 border-dashed border-slate-100 text-slate-300 font-black text-xl hover:border-emerald-200 hover:text-emerald-300 transition-all">+ NEW BRIEF ARCHITECTURE</button>
-        </div>
-        <div className="bg-slate-900 text-white p-10 rounded-[40px] shadow-2xl">
-           <Headset className="w-12 h-12 mb-8 text-emerald-400"/>
-           <h3 className="text-2xl font-black mb-4">Strategic Advisor</h3>
-           <p className="text-slate-400 font-medium mb-10">Get expert guidance from an <strong>SP Jain MGB Advisor</strong> to refine your entry into the Delhi NCR market.</p>
-           <button className="w-full bg-emerald-800 py-4 rounded-2xl font-black text-xs uppercase tracking-widest">Connect Now</button>
         </div>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#FCFCFC] font-sans text-slate-900 selection:bg-emerald-100">
+    <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-emerald-100">
       <Navbar />
       {view === 'landing' && <HomeView />}
-      {view === 'why-us' && <WhyUsView />}
-      {view === 'about' && <AboutView name="Kanishk Dawar" school="SP Jain School of Global Management" linkedin="63b112169" />}
-      {view === 'case-study' && <CaseStudyView />}
-      {view === 'architect' && <ArchitectView />}
-      {view === 'loading' && <div className="min-h-screen flex items-center justify-center animate-pulse"><ChefHat className="w-20 h-20 text-emerald-800"/></div>}
-      {view === 'refining' && <RefineView />}
-      {view === 'results' && <ResultsView />}
-      {view === 'role-select' && (
-        <div className="pt-40 pb-20 px-4 max-w-4xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-8">
-            <div onClick={() => navigate('dashboard')} className="bg-white p-12 rounded-[56px] border-2 border-slate-50 hover:border-emerald-800 cursor-pointer shadow-sm"><ChefHat className="w-12 h-12 text-emerald-800 mb-8"/><h3 className="text-3xl font-black mb-2">Chef Portal</h3><p className="text-slate-500 font-medium italic">Manage concept architecture.</p></div>
-            <div onClick={() => navigate('consultant')} className="bg-white p-12 rounded-[56px] border-2 border-slate-50 hover:border-slate-900 cursor-pointer shadow-sm"><Briefcase className="w-12 h-12 text-slate-900 mb-8"/><h3 className="text-3xl font-black mb-2">Consultant Hub</h3><p className="text-slate-500 font-medium italic">Review high-intent leads.</p></div>
+      {view === 'why-briefly' && <WhyBrieflyView />}
+      {view === 'about' && (
+        <div className="pt-40 pb-20 px-6 max-w-4xl mx-auto">
+          <div className="bg-white rounded-[56px] p-16 shadow-2xl border border-slate-100 text-center">
+             <div className="w-32 h-32 bg-emerald-50 rounded-full mx-auto mb-10 flex items-center justify-center text-emerald-800 border-4 border-white shadow-xl"><User className="w-16 h-16"/></div>
+             <h1 className="text-6xl font-black mb-4 tracking-tighter italic uppercase">Kanishk Dawar</h1>
+             <p className="text-xl font-bold text-emerald-800 mb-12">Product Strategist | Student of SP Jain School of Global Management</p>
+             <p className="text-slate-500 text-xl leading-relaxed mb-16 max-w-2xl mx-auto">Master of Global Business candidate with 2.5 years of experience across <strong>various restaurant concepts</strong> and personal branding for world-class chefs.</p>
+             <div className="flex justify-center">
+                {/* FIXED LINKEDIN REDIRECT */}
+                <a href="https://www.linkedin.com/in/kanishk-dawar-63b112169" target="_blank" rel="noopener noreferrer" className="bg-[#0077b5] text-white px-10 py-4 rounded-2xl font-black text-sm uppercase flex items-center gap-3 shadow-xl hover:bg-blue-800 transition-all">View LinkedIn Profile <ExternalLink className="w-4 h-4"/></a>
+             </div>
           </div>
         </div>
       )}
-      {view === 'dashboard' && <DashboardView />}
-      {view === 'consultant' && <div className="pt-40 text-center font-black opacity-10 text-6xl italic">LEAD PORTAL ACTIVE</div>}
       
-      <footer className="bg-white border-t border-slate-100 py-24 px-4 mt-20">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-          <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Developed by <strong>Kanishk Dawar</strong> | SP Jain School of Global Management</p>
-          <div className="flex gap-8 text-xs font-black uppercase tracking-widest text-slate-400">
-            <button onClick={() => alert("Privacy enabled.")}>Privacy</button>
-            <button onClick={() => alert("Terms active.")}>Terms</button>
-            <a href="https://www.linkedin.com/in/kanishk-dawar-63b112169" target="_blank">LinkedIn</a>
+      {view === 'loading' && (
+        <div className="min-h-screen flex flex-col items-center justify-center animate-pulse">
+          <ChefHat className="w-24 h-24 text-emerald-900 mb-6" />
+          <p className="font-black text-xs uppercase tracking-[0.5em] text-slate-300 italic">Initiating Architecture</p>
+        </div>
+      )}
+
+      {view === 'refining' && (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-emerald-900 text-white px-6">
+          <BrainCircuit className="w-24 h-24 mb-12 animate-spin-slow" />
+          <h2 className="text-6xl font-black tracking-tighter italic uppercase mb-4">Refining Your Brief...</h2>
+          <div className="flex gap-3 text-emerald-400 font-black text-xs tracking-widest uppercase">
+             <span className="animate-pulse">Structuring Logic</span> • <span className="animate-pulse delay-150">Vetting Partners</span> • <span className="animate-pulse delay-300">Auditing Scope</span>
+          </div>
+        </div>
+      )}
+
+      {view === 'results' && (
+        <div className="pt-40 pb-20 px-6 max-w-6xl mx-auto">
+          <div className="bg-white rounded-[64px] border border-slate-100 shadow-2xl p-16 md:p-24 relative">
+             <div className="absolute top-0 right-0 bg-emerald-900 text-white px-12 py-6 rounded-bl-[64px] font-black text-xs tracking-[0.2em] italic uppercase">AI Strategic Result</div>
+             <h2 className="text-6xl font-black mb-12 tracking-tighter text-slate-900 uppercase italic leading-none">{formData.name} <br/>Architecture</h2>
+             <div className="grid md:grid-cols-2 gap-12 mb-16">
+                <div><h4 className="text-[10px] font-black text-slate-300 uppercase mb-4 tracking-widest">Project Summary</h4><p className="text-xl font-bold leading-relaxed">{formData.rawBrief ? "AI structured narrative focused on culinary brand growth." : formData.goals[0] + " focused strategy."}</p></div>
+                <div><h4 className="text-[10px] font-black text-slate-300 uppercase mb-4 tracking-widest">Strategic Fit</h4><p className="text-xl font-bold italic leading-relaxed text-emerald-800">Perfectly matched for Premium Creative Boutiques in the Indian market.</p></div>
+             </div>
+             <div className="flex gap-6">
+                <button onClick={() => navigate('dashboard')} className="bg-slate-900 text-white px-12 py-5 rounded-3xl font-black text-sm uppercase tracking-widest shadow-2xl">Access Chef Portal</button>
+                <button onClick={() => setStep(1)} className="bg-slate-50 text-slate-400 px-12 py-5 rounded-3xl font-black text-sm uppercase tracking-widest">New Architecture</button>
+             </div>
+          </div>
+        </div>
+      )}
+
+      {view === 'role-select' && (
+        <div className="pt-40 pb-20 px-6 max-w-4xl mx-auto">
+          <h2 className="text-6xl font-black text-center mb-20 tracking-tighter uppercase italic">Choose Portal.</h2>
+          <div className="grid md:grid-cols-2 gap-8">
+            <div onClick={() => navigate('dashboard')} className="bg-white p-12 rounded-[56px] border-4 border-slate-50 hover:border-emerald-800 cursor-pointer shadow-sm group">
+               <ChefHat className="w-16 h-16 text-emerald-800 mb-8 group-hover:scale-110 transition-transform"/>
+               <h3 className="text-3xl font-black mb-2 uppercase italic tracking-tight">Chef Portal</h3>
+               <p className="text-slate-400 font-bold italic text-sm">Manage multiple restaurant branding projects.</p>
+            </div>
+            <div onClick={() => navigate('consultant')} className="bg-white p-12 rounded-[56px] border-4 border-slate-50 hover:border-slate-900 cursor-pointer shadow-sm group">
+               <Briefcase className="w-16 h-16 text-slate-900 mb-8 group-hover:scale-110 transition-transform"/>
+               <h3 className="text-3xl font-black mb-2 uppercase italic tracking-tight">Consultant Hub</h3>
+               <p className="text-slate-400 font-bold italic text-sm">Monitor high-intent briefs and client pipelines.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {view === 'dashboard' && <ProjectPortal />}
+      {view === 'consultant' && <ConsultantHub />}
+
+      {/* Global Footer */}
+      <footer className="bg-white border-t py-24 px-6 mt-40">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12">
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <ChefHat className="text-emerald-900 w-6 h-6" />
+              <span className="text-xl font-black italic uppercase tracking-tighter">Briefly</span>
+            </div>
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">Created by <strong>Kanishk Dawar</strong> | SP Jain Student</p>
+          </div>
+          <div className="flex gap-12 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <button onClick={() => alert("Privacy standard active.")}>Privacy</button>
+            <button onClick={() => alert("Student Project Integrity.")}>Terms</button>
+            <a href="https://www.linkedin.com/in/kanishk-dawar-63b112169" target="_blank" className="hover:text-blue-600 transition-colors">LinkedIn</a>
           </div>
         </div>
       </footer>
@@ -278,18 +407,9 @@ export default function App() {
   );
 }
 
-function AboutView({ name, school, linkedin }) {
+// Custom Icon for Scroll Transition
+function ChevronDown(props) {
   return (
-    <div className="pt-40 pb-20 px-4 max-w-4xl mx-auto">
-      <div className="bg-white rounded-[56px] p-12 md:p-20 shadow-2xl border border-slate-100">
-        <h1 className="text-6xl font-black mb-4 tracking-tighter">{name}.</h1>
-        <p className="text-2xl font-bold text-emerald-800 mb-12">Product Strategist | <strong>Full-Time {school} Student</strong></p>
-        <div className="grid md:grid-cols-2 gap-10 text-slate-600 text-xl leading-relaxed mb-12">
-          <p>Master of Global Business candidate with 2.5 years of experience in the <strong>hospitality and education sectors</strong>.</p>
-          <p>Consulted on <strong>various restaurant concepts</strong> across Delhi NCR and Dubai, focusing on culinary marketing and strategic growth.</p>
-        </div>
-        <a href={`https://www.linkedin.com/in/${linkedin}`} target="_blank" className="inline-flex items-center gap-3 bg-blue-600 px-8 py-4 rounded-2xl font-black text-sm text-white shadow-xl">LinkedIn Profile</a>
-      </div>
-    </div>
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
   );
 }
